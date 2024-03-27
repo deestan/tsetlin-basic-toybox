@@ -1,6 +1,7 @@
 <script>
   import Machine from "./Machine.svelte";
   import DataTable from "./DataTable.svelte";
+  import Config from "./Config.svelte";
   import {
     machine,
     features,
@@ -11,6 +12,7 @@
   } from "./machine.js";
 
   export let data;
+  let trainLoop;
 
   $: dataRow;
   $: accuracy;
@@ -57,13 +59,13 @@
   function autoTrain() {
     clearInterval(autoTrainer);
     selectRow(0);
-    autoTrainerRuns = 10;
+    autoTrainerRuns = trainLoop.value;
     accuracy = "...";
     autoTrainer = setInterval(autoTrainStep, 50);
   }
 
   function autoTrainStep() {
-    trainOne();
+    $machine.train();
     var newRow = (dataRow + 1) % data.entries.length;
     selectRow(newRow);
     if (newRow == 0) {
@@ -72,10 +74,6 @@
         calcAccuracy();
       }
     }
-  }
-
-  function trainOne() {
-    $machine.train();
   }
 
   function calcAccuracy() {
@@ -98,9 +96,29 @@
     inputs={$inputs}
     config={$config}
   ></Machine>
-  <br />
-  <button on:click={trainOne}>Train</button>
-  <button on:click={autoTrain}>Train All</button>
-  <span>Accuracy: {accuracy}</span>
-  <DataTable {data} highlight={dataRow} onselect={selectRow}></DataTable>
+  <div class="lower">
+    <Config {config}></Config>
+    <div class="data">
+      <button on:click={autoTrain}>Train on dataset</button>
+      <label>x<input bind:this={trainLoop} type="number" value="5" /> </label>
+      <div>Accuracy after training: {accuracy}</div>
+      <DataTable {data} highlight={dataRow} onselect={selectRow}></DataTable>
+    </div>
+  </div>
 </main>
+
+<style>
+  input {
+    width: 50px;
+  }
+  .data {
+    margin: 0 10px;
+    display: inline-block;
+  }
+  .lower {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: center;
+  }
+</style>
