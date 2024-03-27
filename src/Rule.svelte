@@ -13,6 +13,14 @@
       output: rule.automatons[idx].implies(inputs[idx]),
     };
   });
+
+  function recognizeOrEraseFeedback() {
+    rule.recognizeOrEraseFeedback();
+  }
+
+  function rejectFeedback() {
+    rule.rejectFeedback();
+  }
 </script>
 
 <main>
@@ -31,6 +39,14 @@
       <td class="sum" colspan="4"><b>{rule.name()}</b></td>
       <td class="sumval" colspan="2"><b>{rule.vote()}</b></td>
     </tr>
+    <tr>
+      <td colspan="6">
+        <button on:click={recognizeOrEraseFeedback}>
+          Recognize or Erase Feedback
+        </button>
+        <button on:click={rejectFeedback}>Reject Feedback</button>
+      </td>
+    </tr>
   </table>
 </main>
 
@@ -38,6 +54,7 @@
   main {
     display: inline-block;
     font-size: 10px;
+    margin: 2px;
   }
   table {
     border-spacing: 0;
@@ -62,5 +79,9 @@
   }
   .no {
     background-color: rgb(235, 204, 204);
+  }
+  button {
+    margin: 0;
+    font-size: 12px;
   }
 </style>

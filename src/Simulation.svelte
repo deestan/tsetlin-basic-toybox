@@ -52,14 +52,6 @@
     $expectedOutput = Boolean($inputs[$inputs.length - 2]);
   }
 
-  function recognizeOrEraseFeedback() {
-    $machine.rules.forEach((r) => r.recognizeOrEraseFeedback());
-  }
-
-  function rejectFeedback() {
-    $machine.rules.forEach((r) => r.rejectFeedback());
-  }
-
   let autoTrainer;
   let autoTrainerRuns;
   function autoTrain() {
@@ -106,11 +98,6 @@
     inputs={$inputs}
     config={$config}
   ></Machine>
-  <br />
-  <button on:click={recognizeOrEraseFeedback}
-    >Recognize or Erase Feedback</button
-  >
-  <button on:click={rejectFeedback}>Reject Feedback</button>
   <br />
   <button on:click={trainOne}>Train</button>
   <button on:click={autoTrain}>Train All</button>
