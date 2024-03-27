@@ -101,6 +101,15 @@ export class Machine {
     }
   }
 
+  votedClass() {
+    if (this.vote() == config.val.voteThreshold) {
+      return classify.val;
+    } else if (this.vote() == -config.val.voteThreshold) {
+      return `¬${classify.val}`;
+    }
+    return null;
+  }
+
   vote() {
     return Math.max(-config.val.voteThreshold, Math.min(config.val.voteThreshold,
       this.rules.map(rule => rule.vote()).reduce((acc, vote) => acc + vote)
