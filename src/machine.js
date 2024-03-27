@@ -1,65 +1,75 @@
+import Writeable from './store.js';
+
+export const config = new Writeable({
+  machineRadius: 5,
+  memorizeProbability: 0.1,
+  forgetProbability: 0.9,
+  numPositiveRules: 2,
+  numNegativeRules: 1,
+  voteThreshold: 2
+});
+export const features = new Writeable([]);
+export const inputs = new Writeable([]);
+export const classify = new Writeable("not set");
+export const expectedOutput = new Writeable(false);
+export const machine = new Writeable();
+
+function machineChanged() {
+  machine.set(machine.val);
+}
+
 export class Automaton {
-  constructor(radius) {
-    this.radius = radius;
-    this.value = radius - 1;
-    this.enabled = false;
-    this.memorizeChance = 0.1;
-    this.forgetChance = 1.0 - this.memorizeChance;
+  constructor() {
+    this.value = config.val.machineRadius - 1;
   }
 
-  randomize() {
-    // Tend to lower values
-    this.value =
-      this.radius * 2 -
-      1 -
-      Math.floor(Math.sqrt(Math.random() * Math.pow(this.radius * 2, 2)));
-    this.enabled = this.value >= this.radius;
-  }
-
-  memorize(overrideChance) {
-    const chance =
-      overrideChance == undefined ? this.memorizeChance : overrideChance;
-    if (Math.random() < chance) {
-      this.value = Math.min(this.radius * 2 - 1, this.value + 1);
-    }
-    this.enabled = this.value >= this.radius;
-  }
-
-  forget() {
-    if (Math.random() < this.forgetChance) {
-      this.value = Math.max(0, this.value - 1);
-    }
-    this.enabled = this.value >= this.radius;
+  enabled() {
+    return 1 * (this.value >= config.val.machineRadius);
   }
 
   implies(value) {
-    if (this.enabled) return value;
+    if (this.enabled()) return 1 * value;
     return 1;
+  }
+
+  memorize(overrideProbability) {
+    if (Math.random() < (overrideProbability == undefined ? config.val.memorizeProbability : overrideProbability)) {
+      this.value = Math.min(config.val.machineRadius * 2 - 1, this.value + 1);
+      machineChanged();
+    }
+  }
+
+  forget() {
+    if (Math.random() < config.val.forgetProbability) {
+      this.value = Math.max(0, this.value - 1);
+      machineChanged();
+    }
   }
 }
 
 export class Rule {
-  constructor(forClass, radius, features) {
-    this.forClass = forClass;
-    this.radius = radius;
-    this.features = features;
-    this.inputs = {};
-    this.automatons = {};
-    this.outputTerms = {};
-    for (const feature of features) {
-      this.automatons[feature] = new Automaton(radius);
-      this.outputTerms[feature] = 0;
-    }
-    this.vote = 0;
-    this.calculate();
+  constructor(isPositive) {
+    this.isPositive = isPositive;
+    this.automatons = features.val.map(_ => new Automaton());
+  }
+
+  name() {
+    return this.isPositive ? classify.val : `¬${classify.val}`;
+  }
+
+  outputTerms() {
+    return this.automatons.map((automaton, idx) => automaton.implies(inputs.val[idx]));
+  }
+
+  vote() {
+    return (this.isPositive ? 1 : -1) * this.outputTerms().reduce((x, y) => x * y);
   }
 
   recognizeOrEraseFeedback() {
-    for (const feature of this.features) {
-      const automaton = this.automatons[feature];
-      if (this.vote) {
+    this.automatons.forEach((automaton, idx) => {
+      if (this.vote()) {
         // recognize
-        if (this.inputs[feature]) {
+        if (inputs.val[idx]) {
           automaton.memorize(1.0);
         } else {
           automaton.forget();
@@ -68,109 +78,57 @@ export class Rule {
         // erase feedback
         automaton.forget();
       }
-    }
-    return this.calculate();
+    });
   }
 
   rejectFeedback() {
-    for (const feature of this.features) {
-      const automaton = this.automatons[feature];
-      if (!automaton.enabled && !this.inputs[feature]) {
+    this.automatons.forEach((automaton, idx) => {
+      if (!automaton.enabled() && !inputs.val[idx]) {
         automaton.memorize(1.0);
       }
-    }
-    return this.calculate();
-  }
-
-  randomize() {
-    Object.values(this.automatons).forEach((a) => a.randomize());
-    this.calculate();
-    return this;
-  }
-
-  setInputs(inputs) {
-    this.inputs = inputs;
-    return this.calculate();
-  }
-
-  calculate() {
-    for (const feature of this.features) {
-      this.outputTerms[feature] = this.automatons[feature].implies(
-        this.inputs[feature] || 0
-      );
-    }
-    this.vote = Object.values(this.outputTerms).reduce((x, y) => x * y);
-    return this;
+    });
   }
 }
 
 export class Machine {
-  constructor(
-    forClass,
-    radius,
-    features,
-    numPositiveRules,
-    numNegativeRules,
-    voteThreshold
-  ) {
-    this.forClass = forClass;
-    this.radius = radius;
-    this.features = features;
-    this.inputs = {};
-    this.numPositiveRules = numPositiveRules;
-    this.numNegativeRules = numNegativeRules;
-    this.voteThreshold = voteThreshold;
-    this.vote = 0;
-    this.classify = false;
+  constructor() {
     this.rules = [];
-    for (let i = 0; i < numPositiveRules; i++) {
-      this.rules.push(new Rule(forClass, radius, features));
+    for (let i = 0; i < config.val.numPositiveRules; i++) {
+      this.rules.push(new Rule(true));
     }
-    for (let i = 0; i < numNegativeRules; i++) {
-      this.rules.push(new Rule(`¬${forClass}`, radius, features));
+    for (let i = 0; i < config.val.numNegativeRules; i++) {
+      this.rules.push(new Rule(false));
     }
-    this.calculate();
   }
 
-  setInputs(inputs) {
-    this.inputs = inputs;
-    this.rules.forEach((rule) => rule.setInputs(inputs));
-    return this.calculate();
+  vote() {
+    return Math.max(-config.val.voteThreshold, Math.min(config.val.voteThreshold,
+      this.rules.map(rule => rule.vote()).reduce((acc, vote) => acc + vote)
+    ));
   }
 
-  calculate() {
-    this.vote = 0;
-    for (let i = 0; i < this.rules.length; i++) {
-      const ruleSign = i < this.numPositiveRules ? 1 : -1;
-      this.vote += this.rules[i].vote * ruleSign;
-    }
-    this.vote = Math.max(
-      -this.voteThreshold,
-      Math.min(this.voteThreshold, this.vote)
-    );
-    this.classify = this.vote > 0;
-    return this;
+  classify() {
+    return this.vote() == config.val.voteThreshold;
   }
 
-  train(isClass) {
+  train() {
     const feedbackThreshold =
-      (this.voteThreshold - this.vote * (isClass ? 1 : -1)) /
-      (this.voteThreshold * 2);
-    for (let i = 0; i < this.rules.length; i++) {
-      const rule = this.rules[i];
-      const ruleShouldVote =
-        Boolean(isClass) == Boolean(i < this.numPositiveRules);
+      (config.val.voteThreshold - this.vote() * (expectedOutput.val ? 1 : -1)) /
+      (config.val.voteThreshold * 2);
+    function trainRule(rule) {
       if (Math.random() < feedbackThreshold) {
-        if (ruleShouldVote) {
+        if (rule.isPositive == expectedOutput.val) {
           rule.recognizeOrEraseFeedback();
-        } else {
-          if (rule.vote) {
-            rule.rejectFeedback();
-          }
+        } else if (rule.vote()) {
+          rule.rejectFeedback();
         }
       }
-      rule.calculate();
     }
-    return this.calculate();
+    this.rules.forEach(rule => trainRule(rule));
   }
 }
+
+features.subscribe(_ => machine.set(new Machine()));
+classify.subscribe(_ => machine.set(new Machine()));
+config.subscribe(_ => machine.set(new Machine()));
+inputs.subscribe(machineChanged);

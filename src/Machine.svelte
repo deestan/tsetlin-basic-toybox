@@ -1,11 +1,13 @@
 <script>
   import Rule from "./Rule.svelte";
-  export let state;
-  $: rules = state.rules;
+  export let machine;
+  export let inputs;
+  export let features;
+  export let config;
 </script>
 
 <main>
-  {#each rules as rule}
-    <Rule state={rule}></Rule>
+  {#each machine.rules as rule}
+    <Rule {rule} {inputs} {features} {config}></Rule>
   {/each}
 </main>

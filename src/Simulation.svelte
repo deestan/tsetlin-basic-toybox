@@ -1,56 +1,63 @@
 <script>
   import Machine from "./Machine.svelte";
   import DataTable from "./DataTable.svelte";
-  import * as lib from "./machine.js";
+  import {
+    machine,
+    features,
+    inputs,
+    expectedOutput,
+    config,
+    classify,
+  } from "./machine.js";
 
   export let data;
 
   $: dataRow;
-  $: machine;
   $: accuracy;
 
-  const features = [];
-  let classifyAs;
-  data.properties.forEach((property) => {
-    if (property.classifier) {
-      classifyAs = property.features[0];
-    } else {
-      property.features.forEach((feature) => {
-        const name =
-          property.name == "" ? feature : `${property.name}=${feature}`;
-        features.push(name);
-        features.push(`¬${name}`);
-      });
-    }
-  });
+  function featuresFromData(data) {
+    const features = [];
+    data.properties.forEach((property) => {
+      if (property.classifier) {
+        $classify = property.features[0];
+      } else {
+        property.features.forEach((feature) => {
+          const name =
+            property.name == "" ? feature : `${property.name}=${feature}`;
+          features.push(name);
+          features.push(`¬${name}`);
+        });
+      }
+    });
+    return features;
+  }
+
+  $features = featuresFromData(data);
   let dataRow = 0;
-  let machine = new lib.Machine(classifyAs, 5, features, 2, 1, 2);
-  machine.setInputs(inputsFrom(dataRow));
   let accuracy = "N/A";
+  selectRow(dataRow);
 
   function inputsFrom(row) {
     let newInputs = [];
-    const entry = data.entries[row];
-    for (let i = 0; i < entry.length - 1; i++) {
-      newInputs[features[i * 2]] = entry[i];
-      newInputs[features[i * 2 + 1]] = 1 - entry[i];
-    }
+    data.entries[row].forEach((entry) => {
+      newInputs.push(entry);
+      newInputs.push(1 - entry);
+    });
     return newInputs;
   }
 
   function selectRow(selectedRow) {
     dataRow = selectedRow;
-    machine = machine.setInputs(inputsFrom(dataRow));
+    $inputs = inputsFrom(dataRow);
+    $expectedOutput = Boolean($inputs[$inputs.length - 2]);
   }
 
   function recognizeOrEraseFeedback() {
-    machine.rules.forEach((r) => r.recognizeOrEraseFeedback());
-    machine = machine;
+    $machine.rules.forEach((r) => r.recognizeOrEraseFeedback());
   }
 
   function rejectFeedback() {
-    machine.rules.forEach((r) => r.rejectFeedback());
-    machine = machine;
+    $machine.rules.forEach((r) => r.rejectFeedback());
   }
 
   let autoTrainer;
@@ -76,9 +83,7 @@
   }
 
   function trainOne() {
-    var entry = data.entries[dataRow];
-    var entryIsClass = entry[entry.length - 1];
-    machine = machine.train(entryIsClass);
+    $machine.train();
   }
 
   function calcAccuracy() {
@@ -86,9 +91,7 @@
     let correct = 0;
     for (let i = 0; i < numEntries; i++) {
       selectRow(i);
-      var entry = data.entries[dataRow];
-      var entryIsClass = Boolean(entry[entry.length - 1]);
-      if (machine.classify == entryIsClass) {
+      if ($machine.classify() == $expectedOutput) {
         correct++;
       }
     }
@@ -97,7 +100,12 @@
 </script>
 
 <main>
-  <Machine state={machine}></Machine>
+  <Machine
+    machine={$machine}
+    features={$features}
+    inputs={$inputs}
+    config={$config}
+  ></Machine>
   <br />
   <button on:click={recognizeOrEraseFeedback}
     >Recognize or Erase Feedback</button

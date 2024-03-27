@@ -1,25 +1,35 @@
 <script>
   import Automaton from "./Automaton.svelte";
-  export let state;
-  $: voteClass = state.vote ? "vote yes" : "vote no";
-  $: automatons = state.automatons;
+  export let rule;
+  export let inputs;
+  export let features;
+  export let config;
+  $: voteClass = rule.vote() > 0 ? "vote yes" : "vote no";
+  $: liveStates = features.map((feature, idx) => {
+    return {
+      feature,
+      automaton: rule.automatons[idx],
+      input: inputs[idx],
+      output: rule.automatons[idx].implies(inputs[idx]),
+    };
+  });
 </script>
 
 <main>
   <table>
-    {#each state.features as feature}
+    {#each liveStates as { feature, automaton, input, output }}
       <tr>
         <td class="label">{feature}</td>
-        <td><Automaton state={automatons[feature]}></Automaton></td>
+        <td><Automaton {automaton} {config}></Automaton></td>
         <td>⇒</td>
-        <td>{state.inputs[feature]}</td>
+        <td>{input}</td>
         <td>=</td>
-        <td>{state.outputTerms[feature]}</td>
+        <td>{output}</td>
       </tr>
     {/each}
     <tr class={voteClass}>
-      <td class="sum" colspan="5"><b>{state.forClass}</b></td>
-      <td><b>{state.vote}</b></td>
+      <td class="sum" colspan="4"><b>{rule.name()}</b></td>
+      <td class="sumval" colspan="2"><b>{rule.vote()}</b></td>
     </tr>
   </table>
 </main>
@@ -37,6 +47,9 @@
   }
   .sum {
     text-align: center;
+  }
+  .sumval {
+    text-align: right;
   }
   .vote {
     transition: 200ms;
