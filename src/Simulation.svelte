@@ -9,7 +9,7 @@
     expectedOutput,
     config,
     classify,
-  } from "./machine.js";
+  } from "./state.js";
 
   export let data;
   let trainLoop;
