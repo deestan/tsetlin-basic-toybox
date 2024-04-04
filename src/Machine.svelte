@@ -53,6 +53,6 @@
     border-color: rgb(192, 210, 192);
   }
   main.classify-negative {
-    background-color: rgb(235, 204, 204);
+    border-color: rgb(235, 204, 204);
   }
 </style>
