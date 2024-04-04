@@ -23,17 +23,20 @@
 </script>
 
 <main class={classificationStyleClass}>
-  {#each machine.rules as rule}
-    <Rule {rule} {inputs} {features} {config}></Rule>
-  {/each}
   <div class="summary">
     {classifiedAs} (votes: {votes}, threshold: {config.voteThreshold})
   </div>
+  {#each machine.rules as rule}
+    <Rule {rule} {inputs} {features} {config}></Rule>
+  {/each}
 </main>
 
 <style>
+  main {
+    margin-top: 5px;
+  }
   .summary {
-    background: #eee;
+    background: #aaa;
   }
   .classify-positive .summary {
     background-color: rgb(192, 210, 192);
@@ -42,7 +45,7 @@
     background-color: rgb(235, 204, 204);
   }
   main {
-    border: 2px solid #eee;
+    border: 2px solid #aaa;
   }
   main.classify-positive {
     border-color: rgb(192, 210, 192);

@@ -99,7 +99,7 @@
   <div class="configurations">
     <Config {config}></Config>
     <div class="data">
-      <div>
+      <div class="header">
         <label
           >Dataset: <select on:change={selectDataset}>
             {#each Object.keys(datasets) as dataset}
@@ -108,10 +108,12 @@
           </select>
         </label>
       </div>
-      <button on:click={autoTrain}>Train on dataset</button>
-      <label>x<input bind:this={trainLoop} type="number" value="5" /> </label>
-      <div>Accuracy after training: {accuracy}</div>
-      <DataTable {data} highlight={dataRow} onselect={selectRow}></DataTable>
+      <div class="content">
+        <DataTable {data} highlight={dataRow} onselect={selectRow}></DataTable>
+        <button on:click={autoTrain}>Train on dataset</button>
+        <label>x<input bind:this={trainLoop} type="number" value="5" /> </label>
+        <div>Accuracy after training: {accuracy}</div>
+      </div>
     </div>
   </div>
   <Machine
@@ -129,6 +131,20 @@
   .data {
     margin: 0 10px;
     display: inline-block;
+    border: 2px solid #aaa;
+    display: inline-block;
+    text-align: left;
+  }
+  .data .header {
+    background-color: #aaa;
+    padding: 2px 10px;
+    margin-bottom: 5px;
+  }
+  .data .content {
+    padding: 2px;
+  }
+  .data .content button {
+    margin-bottom: 2px;
   }
   .configurations {
     display: flex;
