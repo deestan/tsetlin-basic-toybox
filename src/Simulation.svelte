@@ -10,12 +10,9 @@
     config,
     classify,
   } from "./state.js";
+  import { datasets } from "./sampleData.js";
 
-  export let data;
   let trainLoop;
-
-  $: dataRow;
-  $: accuracy;
 
   function featuresFromData(data) {
     const features = [];
@@ -34,10 +31,15 @@
     return features;
   }
 
+  let selectedDataset = Object.keys(datasets)[0];
+  let data = datasets[selectedDataset];
   $features = featuresFromData(data);
   let dataRow = 0;
   let accuracy = "N/A";
   selectRow(dataRow);
+
+  $: data = datasets[selectedDataset];
+  $: $features = featuresFromData(data);
 
   function inputsFrom(row) {
     let newInputs = [];
@@ -76,6 +78,10 @@
     }
   }
 
+  function selectDataset(event) {
+    selectedDataset = event.target.value;
+  }
+
   function calcAccuracy() {
     const numEntries = data.entries.length;
     let correct = 0;
@@ -99,6 +105,15 @@
   <div class="lower">
     <Config {config}></Config>
     <div class="data">
+      <div>
+        <label
+          >Dataset: <select on:change={selectDataset}>
+            {#each Object.keys(datasets) as dataset}
+              <option value={dataset}>{dataset}</option>
+            {/each}
+          </select>
+        </label>
+      </div>
       <button on:click={autoTrain}>Train on dataset</button>
       <label>x<input bind:this={trainLoop} type="number" value="5" /> </label>
       <div>Accuracy after training: {accuracy}</div>
