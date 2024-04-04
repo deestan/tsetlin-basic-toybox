@@ -12,7 +12,22 @@
   } from "./state.js";
   import { datasets } from "./sampleData.js";
 
+  let autoTrainer;
+  let autoTrainerRuns;
   let trainLoop;
+  let selectedDataset = Object.keys(datasets)[0];
+  let data = datasets[selectedDataset];
+  $features = featuresFromData(data);
+  let dataRow = 0;
+  let accuracy = "N/A";
+  selectRow(dataRow);
+
+  $: data = datasets[selectedDataset];
+  $: $features = featuresFromData(data);
+  $: dataRow = Math.min(data.entries.length - 1, dataRow);
+  $: selectRow(dataRow);
+  $: $inputs = inputsFrom(data.entries[dataRow]);
+  $: $expectedOutput = Boolean($inputs[$inputs.length - 2]);
 
   function featuresFromData(data) {
     const features = [];
@@ -31,19 +46,9 @@
     return features;
   }
 
-  let selectedDataset = Object.keys(datasets)[0];
-  let data = datasets[selectedDataset];
-  $features = featuresFromData(data);
-  let dataRow = 0;
-  let accuracy = "N/A";
-  selectRow(dataRow);
-
-  $: data = datasets[selectedDataset];
-  $: $features = featuresFromData(data);
-
   function inputsFrom(row) {
     let newInputs = [];
-    data.entries[row].forEach((entry) => {
+    row.forEach((entry) => {
       newInputs.push(entry);
       newInputs.push(1 - entry);
     });
@@ -52,12 +57,8 @@
 
   function selectRow(selectedRow) {
     dataRow = selectedRow;
-    $inputs = inputsFrom(dataRow);
-    $expectedOutput = Boolean($inputs[$inputs.length - 2]);
   }
 
-  let autoTrainer;
-  let autoTrainerRuns;
   function autoTrain() {
     clearInterval(autoTrainer);
     selectRow(0);
