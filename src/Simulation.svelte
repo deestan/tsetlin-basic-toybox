@@ -96,13 +96,7 @@
 </script>
 
 <main>
-  <Machine
-    machine={$machine}
-    features={$features}
-    inputs={$inputs}
-    config={$config}
-  ></Machine>
-  <div class="lower">
+  <div class="configurations">
     <Config {config}></Config>
     <div class="data">
       <div>
@@ -120,6 +114,12 @@
       <DataTable {data} highlight={dataRow} onselect={selectRow}></DataTable>
     </div>
   </div>
+  <Machine
+    machine={$machine}
+    features={$features}
+    inputs={$inputs}
+    config={$config}
+  ></Machine>
 </main>
 
 <style>
@@ -130,7 +130,7 @@
     margin: 0 10px;
     display: inline-block;
   }
-  .lower {
+  .configurations {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-end;
