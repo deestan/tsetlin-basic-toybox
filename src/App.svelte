@@ -1,7 +1,5 @@
 <script>
-  import DataTable from "./DataTable.svelte";
   import Simulation from "./Simulation.svelte";
-  import * as sample from "./sampleData.js";
 </script>
 
 <main>

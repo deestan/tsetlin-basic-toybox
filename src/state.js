@@ -1,13 +1,13 @@
 import Writeable from './store.js';
 
-export const config = new Writeable({
-  machineRadius: 5,
-  memorizeProbability: 0.1,
-  forgetProbability: 0.9,
-  numPositiveRules: 2,
-  numNegativeRules: 1,
-  voteThreshold: 2
-});
+export const config = {
+  machineRadius: new Writeable(5),
+  memorizeProbability: new Writeable(0.1),
+  forgetProbability: new Writeable(0.9),
+  numPositiveRules: new Writeable(2),
+  numNegativeRules: new Writeable(1),
+  voteThreshold: new Writeable(2)
+};
 export const features = new Writeable([]);
 export const inputs = new Writeable([]);
 export const classify = new Writeable("not set");
@@ -20,11 +20,11 @@ function machineChanged() {
 
 export class Automaton {
   constructor() {
-    this.value = config.val.machineRadius - 1;
+    this.value = config.machineRadius.val - 1;
   }
 
   enabled() {
-    return 1 * (this.value >= config.val.machineRadius);
+    return 1 * (this.value >= config.machineRadius.val);
   }
 
   implies(value) {
@@ -33,14 +33,14 @@ export class Automaton {
   }
 
   memorize(overrideProbability) {
-    if (Math.random() < (overrideProbability == undefined ? config.val.memorizeProbability : overrideProbability)) {
-      this.value = Math.min(config.val.machineRadius * 2 - 1, this.value + 1);
+    if (Math.random() < (overrideProbability == undefined ? config.memorizeProbability.val : overrideProbability)) {
+      this.value = Math.min(config.machineRadius.val * 2 - 1, this.value + 1);
       machineChanged();
     }
   }
 
   forget() {
-    if (Math.random() < config.val.forgetProbability) {
+    if (Math.random() < config.forgetProbability.val) {
       this.value = Math.max(0, this.value - 1);
       machineChanged();
     }
@@ -93,37 +93,37 @@ export class Rule {
 export class Machine {
   constructor() {
     this.rules = [];
-    for (let i = 0; i < config.val.numPositiveRules; i++) {
+    for (let i = 0; i < config.numPositiveRules.val; i++) {
       this.rules.push(new Rule(true));
     }
-    for (let i = 0; i < config.val.numNegativeRules; i++) {
+    for (let i = 0; i < config.numNegativeRules.val; i++) {
       this.rules.push(new Rule(false));
     }
   }
 
   votedClass() {
-    if (this.vote() == config.val.voteThreshold) {
+    if (this.vote() == config.voteThreshold.val) {
       return classify.val;
-    } else if (this.vote() == -config.val.voteThreshold) {
+    } else if (this.vote() == -config.voteThreshold.val) {
       return `¬${classify.val}`;
     }
     return null;
   }
 
   vote() {
-    return Math.max(-config.val.voteThreshold, Math.min(config.val.voteThreshold,
+    return Math.max(-config.voteThreshold.val, Math.min(config.voteThreshold.val,
       this.rules.map(rule => rule.vote()).reduce((acc, vote) => acc + vote)
     ));
   }
 
   classify() {
-    return this.vote() == config.val.voteThreshold;
+    return this.vote() == config.voteThreshold.val;
   }
 
   train() {
     const feedbackThreshold =
-      (config.val.voteThreshold - this.vote() * (expectedOutput.val ? 1 : -1)) /
-      (config.val.voteThreshold * 2);
+      (config.voteThreshold.val - this.vote() * (expectedOutput.val ? 1 : -1)) /
+      (config.voteThreshold.val * 2);
     function trainRule(rule) {
       if (Math.random() < feedbackThreshold) {
         if (rule.isPositive == expectedOutput.val) {
@@ -139,5 +139,7 @@ export class Machine {
 
 features.subscribe(_ => machine.set(new Machine()));
 classify.subscribe(_ => machine.set(new Machine()));
-config.subscribe(_ => machine.set(new Machine()));
+config.machineRadius.subscribe(_ => machine.set(new Machine()));
+config.numPositiveRules.subscribe(_ => machine.set(new Machine()));
+config.numNegativeRules.subscribe(_ => machine.set(new Machine()));
 inputs.subscribe(machineChanged);

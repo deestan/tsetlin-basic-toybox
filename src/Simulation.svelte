@@ -78,10 +78,6 @@
     }
   }
 
-  function selectDataset(event) {
-    selectedDataset = event.target.value;
-  }
-
   function calcAccuracy() {
     const numEntries = data.entries.length;
     let correct = 0;
@@ -101,7 +97,7 @@
     <div class="data">
       <div class="header">
         <label
-          >Dataset: <select on:change={selectDataset}>
+          >Dataset: <select bind:value={selectedDataset}>
             {#each Object.keys(datasets) as dataset}
               <option value={dataset}>{dataset}</option>
             {/each}
@@ -116,11 +112,7 @@
       </div>
     </div>
   </div>
-  <Machine
-    machine={$machine}
-    features={$features}
-    inputs={$inputs}
-    config={$config}
+  <Machine machine={$machine} features={$features} inputs={$inputs} {config}
   ></Machine>
 </main>
 

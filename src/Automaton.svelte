@@ -1,9 +1,10 @@
 <script>
   export let automaton;
   export let config;
-  $: markers = createMarkers(config.machineRadius);
+  const machineRadius = config.machineRadius;
+  $: markers = createMarkers($machineRadius);
   $: light = automaton.enabled() ? "light on" : "light off";
-  $: valueMarkerPosition = `${((automaton.value + 0.5) / (config.machineRadius * 2)) * 100}%`;
+  $: valueMarkerPosition = `${((automaton.value + 0.5) / ($machineRadius * 2)) * 100}%`;
   function createMarkers(radius) {
     let markers = [];
     for (let i = 0; i < radius; i++) {

@@ -4,6 +4,8 @@
   export let inputs;
   export let features;
   export let config;
+  const voteThreshold = config.voteThreshold;
+
   function classDescription(machine) {
     const votedClass = machine.votedClass();
     if (votedClass == null) {
@@ -24,7 +26,7 @@
 
 <main class={classificationStyleClass}>
   <div class="summary">
-    {classifiedAs} (votes: {votes}, threshold: {config.voteThreshold})
+    {classifiedAs} (votes: {votes}, threshold: {$voteThreshold})
   </div>
   {#each machine.rules as rule}
     <Rule {rule} {inputs} {features} {config}></Rule>
