@@ -17,20 +17,14 @@
   let trainLoop;
   let selectedDataset = Object.keys(datasets)[0];
   let data = datasets[selectedDataset];
-  $features = featuresFromData(data);
   let dataRow = 0;
   let accuracy = "N/A";
-  selectRow(dataRow);
 
   $: data = datasets[selectedDataset];
-  $: $features = featuresFromData(data);
   $: dataRow = Math.min(data.entries.length - 1, dataRow);
-  $: selectRow(dataRow);
-  $: $inputs = inputsFrom(data.entries[dataRow]);
   $: $expectedOutput = Boolean($inputs[$inputs.length - 2]);
-
-  function featuresFromData(data) {
-    const features = [];
+  $: {
+    $features = [];
     data.properties.forEach((property) => {
       if (property.classifier) {
         $classify = property.features[0];
@@ -38,30 +32,23 @@
         property.features.forEach((feature) => {
           const name =
             property.name == "" ? feature : `${property.name}=${feature}`;
-          features.push(name);
-          features.push(`¬${name}`);
+          $features.push(name);
+          $features.push(`¬${name}`);
         });
       }
     });
-    return features;
   }
-
-  function inputsFrom(row) {
-    let newInputs = [];
-    row.forEach((entry) => {
-      newInputs.push(entry);
-      newInputs.push(1 - entry);
+  $: {
+    $inputs = [];
+    data.entries[dataRow].forEach((entry) => {
+      $inputs.push(entry);
+      $inputs.push(1 - entry);
     });
-    return newInputs;
-  }
-
-  function selectRow(selectedRow) {
-    dataRow = selectedRow;
   }
 
   function autoTrain() {
     clearInterval(autoTrainer);
-    selectRow(0);
+    dataRow = 0;
     autoTrainerRuns = trainLoop.value;
     accuracy = "...";
     autoTrainer = setInterval(autoTrainStep, 50);
@@ -69,9 +56,8 @@
 
   function autoTrainStep() {
     $machine.train();
-    var newRow = (dataRow + 1) % data.entries.length;
-    selectRow(newRow);
-    if (newRow == 0) {
+    dataRow = (dataRow + 1) % data.entries.length;
+    if (dataRow == 0) {
       if (--autoTrainerRuns <= 0) {
         clearInterval(autoTrainer);
         calcAccuracy();
@@ -83,7 +69,7 @@
     const numEntries = data.entries.length;
     let correct = 0;
     for (let i = 0; i < numEntries; i++) {
-      selectRow(i);
+      dataRow = i;
       if ($machine.classify() == $expectedOutput) {
         correct++;
       }
@@ -106,7 +92,8 @@
         </label>
       </div>
       <div class="content">
-        <DataTable {data} highlight={dataRow} onselect={selectRow}></DataTable>
+        <DataTable {data} highlight={dataRow} onselect={(i) => (dataRow = i)}
+        ></DataTable>
         <button on:click={autoTrain}>Train on dataset</button>
         <label>x<input bind:this={trainLoop} type="number" value="5" /> </label>
         <div>Accuracy after training: {accuracy}</div>
