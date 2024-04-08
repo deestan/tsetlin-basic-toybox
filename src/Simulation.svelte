@@ -129,7 +129,7 @@
   .configurations {
     display: flex;
     flex-wrap: wrap;
-    align-items: flex-end;
+    align-items: flex-start;
     justify-content: center;
   }
 </style>

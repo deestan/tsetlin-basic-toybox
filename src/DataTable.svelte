@@ -51,7 +51,8 @@
   table {
     display: inline-block;
     border-spacing: 0;
-    font-size: 10px;
+    font-size: 12px;
+    text-align: center;
   }
 
   th {
