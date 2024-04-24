@@ -46,35 +46,31 @@
     });
   }
 
+  let correctClassifications = [];
   function autoTrain() {
     clearInterval(autoTrainer);
     dataRow = 0;
+    correctClassifications = [];
     autoTrainerRuns = trainLoop.value;
     accuracy = "...";
-    autoTrainer = setInterval(autoTrainStep, 50);
+    autoTrainer = setInterval(autoTrainStep, 100);
   }
 
   function autoTrainStep() {
     $machine.train();
+    correctClassifications.push($machine.classify() == $expectedOutput ? 1 : 0);
+    while (correctClassifications.length > data.entries.length)
+      correctClassifications.shift();
+    if (correctClassifications.length == data.entries.length) {
+      const correctness =
+        correctClassifications.reduce((x, y) => x + y) /
+        correctClassifications.length;
+      accuracy = `${Math.round(100 * correctness)}%`;
+    }
     dataRow = (dataRow + 1) % data.entries.length;
-    if (dataRow == 0) {
-      if (--autoTrainerRuns <= 0) {
-        clearInterval(autoTrainer);
-        calcAccuracy();
-      }
+    if (dataRow == 0 && --autoTrainerRuns <= 0) {
+      clearInterval(autoTrainer);
     }
-  }
-
-  function calcAccuracy() {
-    const numEntries = data.entries.length;
-    let correct = 0;
-    for (let i = 0; i < numEntries; i++) {
-      dataRow = i;
-      if ($machine.classify() == $expectedOutput) {
-        correct++;
-      }
-    }
-    accuracy = `${Math.round((100 * correct) / numEntries)}%`;
   }
 </script>
 
